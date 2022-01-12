@@ -1,4 +1,4 @@
-// Package json provides a json codec
+// Package msgpack provides a msgpack codec
 package msgpack // import "go.unistack.org/micro-codec-msgpack/v3"
 
 import (
