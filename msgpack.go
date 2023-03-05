@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/vmihailenco/msgpack/v5"
+	pb "go.unistack.org/micro-proto/v3/codec"
 	"go.unistack.org/micro/v3/codec"
 	rutil "go.unistack.org/micro/v3/util/reflect"
 )
@@ -31,7 +32,10 @@ func (c *msgpackCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, err
 		v = nv
 	}
 
-	if m, ok := v.(*codec.Frame); ok {
+	switch m := v.(type) {
+	case *codec.Frame:
+		return m.Data, nil
+	case *pb.Frame:
 		return m.Data, nil
 	}
 
@@ -52,7 +56,11 @@ func (c *msgpackCodec) Unmarshal(b []byte, v interface{}, opts ...codec.Option) 
 		v = nv
 	}
 
-	if m, ok := v.(*codec.Frame); ok {
+	switch m := v.(type) {
+	case *codec.Frame:
+		m.Data = b
+		return nil
+	case *pb.Frame:
 		m.Data = b
 		return nil
 	}
