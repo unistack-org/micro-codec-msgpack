@@ -2,7 +2,7 @@
 package msgpack // import "go.unistack.org/micro-codec-msgpack/v3"
 
 import (
-	"io"
+	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5"
 	pb "go.unistack.org/micro-proto/v3/codec"
@@ -14,10 +14,6 @@ type msgpackCodec struct {
 	opts codec.Options
 }
 
-const (
-	flattenTag = "flatten"
-)
-
 func (c *msgpackCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, error) {
 	if v == nil {
 		return nil, nil
@@ -28,8 +24,10 @@ func (c *msgpackCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, err
 		o(&options)
 	}
 
-	if nv, err := rutil.StructFieldByTag(v, options.TagName, flattenTag); err == nil {
-		v = nv
+	if options.Flatten {
+		if nv, err := rutil.StructFieldByTag(v, options.TagName, "flatten"); err == nil {
+			v = nv
+		}
 	}
 
 	switch m := v.(type) {
@@ -52,8 +50,15 @@ func (c *msgpackCodec) Unmarshal(b []byte, v interface{}, opts ...codec.Option) 
 		o(&options)
 	}
 
-	if nv, err := rutil.StructFieldByTag(v, options.TagName, flattenTag); err == nil {
-		v = nv
+	if options.Flatten {
+		if nv, err := rutil.StructFieldByTag(v, options.TagName, "flatten"); err == nil {
+			v = nv
+			rv := reflect.ValueOf(v)
+			if rv.Kind() != reflect.Pointer &&
+				rv.Kind() != reflect.Map {
+				v = reflect.New(rv.Type()).Interface()
+			}
+		}
 	}
 
 	switch m := v.(type) {
@@ -66,42 +71,6 @@ func (c *msgpackCodec) Unmarshal(b []byte, v interface{}, opts ...codec.Option) 
 	}
 
 	return msgpack.Unmarshal(b, v)
-}
-
-func (c *msgpackCodec) ReadHeader(conn io.Reader, m *codec.Message, t codec.MessageType) error {
-	return nil
-}
-
-func (c *msgpackCodec) ReadBody(conn io.Reader, v interface{}) error {
-	if v == nil {
-		return nil
-	}
-
-	buf, err := io.ReadAll(conn)
-	if err != nil {
-		return err
-	} else if len(buf) == 0 {
-		return nil
-	}
-
-	if nv, nerr := rutil.StructFieldByTag(v, codec.DefaultTagName, flattenTag); nerr == nil {
-		v = nv
-	}
-
-	return c.Unmarshal(buf, v)
-}
-
-func (c *msgpackCodec) Write(conn io.Writer, m *codec.Message, v interface{}) error {
-	if v == nil {
-		return nil
-	}
-
-	buf, err := c.Marshal(v)
-	if err != nil {
-		return err
-	}
-	_, err = conn.Write(buf)
-	return err
 }
 
 func (c *msgpackCodec) String() string {

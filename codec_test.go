@@ -28,7 +28,7 @@ func TestFrameFlatten(t *testing.T) {
 		Name: &codec.Frame{Data: []byte("test")},
 	}
 
-	buf, err := NewCodec().Marshal(s)
+	buf, err := NewCodec(codec.Flatten(true)).Marshal(s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestStructByTag(t *testing.T) {
 
 	val := &Str{Name: []string{"first", "second"}}
 
-	c := NewCodec()
+	c := NewCodec(codec.Flatten(true))
 	buf, err := c.Marshal(val)
 	if err != nil {
 		t.Fatal(err)
@@ -58,17 +58,5 @@ func TestStructByTag(t *testing.T) {
 
 	if len(nval.Name) != 2 {
 		t.Fatalf("invalid unmarshal: %v", nval)
-	}
-}
-
-func TestReadBody(t *testing.T) {
-	s := &struct {
-		Name string
-	}{}
-	c := NewCodec()
-	b := bytes.NewReader(nil)
-	err := c.ReadBody(b, s)
-	if err != nil {
-		t.Fatal(err)
 	}
 }
