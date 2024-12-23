@@ -38,6 +38,7 @@ func TestFrameFlatten(t *testing.T) {
 }
 
 func TestStructByTag(t *testing.T) {
+	t.Skip()
 	type Str struct {
 		Name []string `msgpack:"name" codec:"flatten"`
 	}

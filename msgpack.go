@@ -35,6 +35,10 @@ func (c *msgpackCodec) Marshal(v interface{}, opts ...codec.Option) ([]byte, err
 		return m.Data, nil
 	case *pb.Frame:
 		return m.Data, nil
+	case codec.RawMessage:
+		return []byte(m), nil
+	case *codec.RawMessage:
+		return []byte(*m), nil
 	}
 
 	return msgpack.Marshal(v)
@@ -67,6 +71,12 @@ func (c *msgpackCodec) Unmarshal(b []byte, v interface{}, opts ...codec.Option) 
 		return nil
 	case *pb.Frame:
 		m.Data = b
+		return nil
+	case *codec.RawMessage:
+		*m = append((*m)[0:0], b...)
+		return nil
+	case codec.RawMessage:
+		copy(m, b)
 		return nil
 	}
 
